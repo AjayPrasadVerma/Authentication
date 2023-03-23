@@ -5,6 +5,7 @@ const mongoose = require('mongoose');
 const ejs = require('ejs');
 const bodyParser = require('body-parser');
 const encrypt = require('mongoose-encryption');
+const md5 = require('md5');
 const path = require('path');
 
 const staticPath = path.join(__dirname,"./public");
@@ -23,11 +24,6 @@ const userSchema = new mongoose.Schema({
     password : String
 });
 
-// level 2
-const secret = process.env.SECRET;
-
-userSchema.plugin(encrypt, {secret : secret, encryptedFields : ["password"]});
-
 const User = mongoose.model('Registered_user',userSchema);
 
 app.get("/",(req,res)=>{
@@ -42,11 +38,12 @@ app.get("/register",(req,res)=>{
     res.render('register');
 });
 
+
 app.post("/register", async (req,res)=>{
 
     const newUser = await new User({
         email : req.body.username,
-        password : req.body.password
+        password : md5(req.body.password)
     });
 
     await newUser.save()
@@ -61,7 +58,7 @@ app.post("/register", async (req,res)=>{
 app.post("/login", async (req,res)=>{
 
     const username = req.body.username;
-    const password = req.body.password;
+    const password = md5(req.body.password);
 
     const foundUser = await User.findOne({email : username});
 

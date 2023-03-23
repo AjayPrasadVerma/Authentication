@@ -23,8 +23,8 @@ const userSchema = new mongoose.Schema({
     password : String
 });
 
-// level 1
-const secret = "SomeLongUnguessableString";
+// level 2
+const secret = process.env.SECRET;
 
 userSchema.plugin(encrypt, {secret : secret, encryptedFields : ["password"]});
 

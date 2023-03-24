@@ -5,7 +5,9 @@ const mongoose = require('mongoose');
 const ejs = require('ejs');
 const bodyParser = require('body-parser');
 const encrypt = require('mongoose-encryption');
-const md5 = require('md5');
+const bcrypt = require("bcrypt");
+const saltRounds = 10;
+
 const path = require('path');
 
 const staticPath = path.join(__dirname,"./public");
@@ -41,32 +43,38 @@ app.get("/register",(req,res)=>{
 
 app.post("/register", async (req,res)=>{
 
-    const newUser = await new User({
-        email : req.body.username,
-        password : md5(req.body.password)
-    });
+    bcrypt.hash(req.body.password , saltRounds, async function(err, hash){
 
-    await newUser.save()
-    .then(()=>{
-        console.log("Successfully added........");
-    }).catch((err)=>{
-        console.log(err);
-    })
-    res.render('secrets');
+        const newUser = await new User({
+            email : req.body.username,
+            password : hash
+        });
+    
+        await newUser.save()
+        .then(()=>{
+            console.log("Successfully added........");
+        }).catch((err)=>{
+            console.log(err);
+        })
+        res.render('secrets');
+
+    });
 });
 
 app.post("/login", async (req,res)=>{
 
     const username = req.body.username;
-    const password = md5(req.body.password);
+    const password = req.body.password;
 
     const foundUser = await User.findOne({email : username});
 
     if(foundUser){
         
-        if(foundUser.password === password){
-            res.render('secrets');
-        }
+        bcrypt.compare(password, foundUser.password, function(err,result){
+            if(result === true){
+                res.render('secrets');
+            }
+        })
     }
     else{
         console.log("No Data Found");
